@@ -1,0 +1,21 @@
+name: probe
+on: [push, workflow_dispatch]
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    steps:
+      - run: |
+          python3 - <<'PY'
+          import socket
+          tests=[("aspmx.l.google.com",25),("inbound-smtp.us-east-1.amazonaws.com",25),
+                 ("198.72.85.160",25),("198.72.85.160",587),("smtp.gmail.com",587)]
+          for h,p in tests:
+              try:
+                  s=socket.create_connection((h,p),timeout=8); s.settimeout(8)
+                  try: b=s.recv(100).decode("latin1")[:60]
+                  except Exception: b="(no banner)"
+                  print(f"{h}:{p} OK {b}",flush=True)
+                  s.close()
+              except Exception as e:
+                  print(f"{h}:{p} {type(e).__name__}",flush=True)
+          PY
